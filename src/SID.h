@@ -127,6 +127,12 @@ private:
     void ageBusValue(unsigned int n);
 
     /**
+     * storage for keeping the last raw values
+     */
+
+    int voice_lastvalue[3];
+
+    /**
      * Calculate the numebr of cycles according to current parameters
      * that it takes to reach sync.
      *
@@ -153,7 +159,7 @@ private:
     /// clock internal and external filters
     inline int clockFilt()
     {
-        unsigned short filtOutput = filter->clock(voice[0], voice[1], voice[2]);
+        unsigned short filtOutput = filter->clock(voice[0], voice[1], voice[2], voice_lastvalue);
         int exFiltInput = static_cast<int>(filtOutput) + INT16_MIN;
         return externalFilter.clock(exFiltInput);
     }
@@ -269,7 +275,7 @@ public:
      * @param buf audio output buffer
      * @return number of samples produced
      */
-    int clock(unsigned int cycles, short* buf);
+    int clock(unsigned int cycles, int16_t* buf);
 
     /**
      * Clock SID forward using chosen output resampling algorithm.
@@ -324,6 +330,8 @@ public:
      * Enable/disable old caps (2200pF) for 6581 model.
      */
     void enableOld6581caps(bool enable);
+
+    void volumes(float &a, float &b, float &c) const;
 };
 
 } // namespace reSIDfp
@@ -353,7 +361,7 @@ void SID::ageBusValue(unsigned int n)
 }
 
 RESIDFP_INLINE
-int SID::clock(unsigned int cycles, short* buf)
+int SID::clock(unsigned int cycles, int16_t* buf)
 {
     assert(buf);
 
@@ -375,6 +383,9 @@ int SID::clock(unsigned int cycles, short* buf)
                 if (unlikely(resampler->input(output)))
                 {
                     buf[s++] = resampler->getOutput(scaleFactor);
+                    buf[s++] = voice_lastvalue[0] - INT16_MAX;
+                    buf[s++] = voice_lastvalue[1] - INT16_MAX;
+                    buf[s++] = voice_lastvalue[2] - INT16_MAX;
                 }
             }
 
@@ -388,7 +399,15 @@ int SID::clock(unsigned int cycles, short* buf)
         }
     }
 
-    return s;
+    return s>>2;
+}
+
+RESIDFP_INLINE
+void SID::volumes(float &a, float &b, float &c) const
+{
+    a = voice[0].volume();
+    b = voice[1].volume();
+    c = voice[2].volume();
 }
 
 RESIDFP_INLINE
@@ -416,6 +435,9 @@ int SID::clock(short* buf, int bufSize)
                 if (unlikely(resampler->input(output)))
                 {
                     buf[s++] = resampler->getOutput(scaleFactor);
+                    buf[s++] = voice_lastvalue[0] - INT16_MAX;
+                    buf[s++] = voice_lastvalue[1] - INT16_MAX;
+                    buf[s++] = voice_lastvalue[2] - INT16_MAX;
                     if (unlikely(s == bufSize))
                     {
                         break;

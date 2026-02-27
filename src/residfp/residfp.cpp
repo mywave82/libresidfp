@@ -141,3 +141,8 @@ void residfp::enableOld6581caps(bool enable)
 {
     sid.enableOld6581caps(enable);
 }
+
+void residfp::volumes(float &a, float &b, float &c) const
+{
+    sid.volumes(a, b, c);
+}

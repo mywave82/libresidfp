@@ -220,6 +220,8 @@ public:
      *               false to use the standard 470pF caps.
      */
     void enableOld6581caps(bool enable);
+
+    void volumes(float &a, float &b, float &c) const;
 };
 
 }
