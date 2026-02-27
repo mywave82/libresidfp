@@ -74,6 +74,12 @@ public:
         return wavDAC[wav] * envDAC[env];
     }
 
+    RESIDFP_INLINE
+    float volume(void) const
+    {
+        return envelopeGenerator.output();
+    }
+
     /**
      * Set the analog DAC emulation for waveform generator.
      * Must be called before any operation.

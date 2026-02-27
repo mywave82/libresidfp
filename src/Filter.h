@@ -153,7 +153,7 @@ public:
      * @param voice3 voice 3 in
      * @return filtered output, unsigned 16 bit
      */
-    uint16_t clock(Voice& voice1, Voice& voice2, Voice& voice3);
+    uint16_t clock(Voice& voice1, Voice& voice2, Voice& voice3, int *voice_lastvalue);
 
     /**
      * Enable filter.
@@ -213,7 +213,7 @@ namespace reSIDfp
 {
 
 RESIDFP_INLINE
-uint16_t Filter::clock(Voice& voice1, Voice& voice2, Voice& voice3)
+uint16_t Filter::clock(Voice& voice1, Voice& voice2, Voice& voice3, int *voice_lastvalue)
 {
     // Waveform outputs
     const float wav1 = voice1.output();
@@ -225,11 +225,21 @@ uint16_t Filter::clock(Voice& voice1, Voice& voice2, Voice& voice3)
     const uint8_t env2 = voice2.envelope()->output();
     const uint8_t env3 = voice3.envelope()->output();
 
+    int32_t a, b, c;
+    voice_lastvalue[0] = 0;
+    voice_lastvalue[1] = 0;
+    voice_lastvalue[2] = 0;
+    a = getNormalizedVoice(wav1, env1);
+    b = getNormalizedVoice(wav2, env2);
+    c = getNormalizedVoice(wav3, env3);
+    if (filt1) voice_lastvalue[0] += a;
+    if (filt2) voice_lastvalue[1] += b;
+    if (filt3) voice_lastvalue[2] += c;
     // Voltage summer for filter input
     int32_t Vsum = 0;
-    Vsum += filt1 ? getNormalizedVoice(wav1, env1) : 0;
-    Vsum += filt2 ? getNormalizedVoice(wav2, env2) : 0;
-    Vsum += filt3 ? getNormalizedVoice(wav3, env3) : 0;
+    Vsum += filt1 ? a : 0;
+    Vsum += filt2 ? b : 0;
+    Vsum += filt3 ? c : 0;
     Vsum += filtE ? getNormalizedVoice(extin, 0) : 0;
     Vsum += Vlp;
     Vsum += currentResonance[Vbp];
@@ -246,10 +256,16 @@ uint16_t Filter::clock(Voice& voice1, Voice& voice2, Voice& voice3)
 
     // Voltage summer for mixer input
     int32_t Vmix = 0;
-    Vmix += filt1 ? 0 : getNormalizedMixerVoice(wav1, env1);
-    Vmix += filt2 ? 0 : getNormalizedMixerVoice(wav2, env2);
+    a = getNormalizedMixerVoice(wav1, env1);
+    b = getNormalizedMixerVoice(wav2, env2);
+    c = getNormalizedMixerVoice(wav3, env3);
+    if (!filt1) voice_lastvalue[0] += a;
+    if (!filt2) voice_lastvalue[1] += b;
+    if (!(filt3 || voice3off)) voice_lastvalue[2] += c;
+    Vmix += filt1 ? 0 : a;
+    Vmix += filt2 ? 0 : b;
     // Voice 3 is silenced by voice3off if it is not routed through the filter
-    Vmix += (filt3 || voice3off) ? 0 : getNormalizedMixerVoice(wav3, env3);
+    Vmix += (filt3 || voice3off) ? 0 : c;
     Vmix += filtE ? 0 : getNormalizedMixerVoice(extin, 0);
     Vmix += Vfilt;
 

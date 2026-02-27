@@ -310,6 +310,8 @@ public:
      * @since 1.2
      */
     void setDCBRes(double res);
+    
+    void volumes(float &a, float &b, float &c) const;
 };
 
 }

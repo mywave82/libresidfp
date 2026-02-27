@@ -189,3 +189,8 @@ void residfp::setDCBRes(double res)
 {
     sid.setDCBRes(res);
 }
+
+void residfp::volumes(float &a, float &b, float &c) const
+{
+    sid.volumes(a, b, c);
+}
