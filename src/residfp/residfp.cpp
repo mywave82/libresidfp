@@ -131,3 +131,8 @@ void residfp::enableFilter(bool enable)
 {
     sid.enableFilter(enable);
 }
+
+void residfp::volumes(float &a, float &b, float &c) const
+{
+    sid.volumes(a, b, c);
+}

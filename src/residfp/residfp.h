@@ -194,6 +194,8 @@ public:
      * @param enable false to turn off filter emulation
      */
     void enableFilter(bool enable);
+
+    void volumes(float &a, float &b, float &c) const;
 };
 
 }
